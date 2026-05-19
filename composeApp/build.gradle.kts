@@ -150,10 +150,10 @@ android {
     }
 }
 
-//sqldelight {
-//    databases {
-//        create("NoteDatabase") {
-//            packageName.set("com.example.neurodeck.data.local")
-//        }
-//    }
-//}
+sqldelight {
+    databases {
+        create("NeuroDeckDatabase") {
+            packageName.set("com.example.neurodeck.data.local")
+        }
+    }
+}
