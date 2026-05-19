@@ -201,16 +201,16 @@ composeApp/src/
 | GitHub Actions CI workflow (build + APK artifact) | NIM 123140167 | ✅ Done |
 | SQLDelight schema awal: `decks`, `cards`, `review_records` | NIM 123140050 | 🟡 In Progress |
 | Domain models: `Deck`, `Flashcard`, `ReviewRecord` | NIM 123140050 | 🟡 In Progress |
-| Navigation skeleton untuk 5 screens | NIM 123140167 | 🟡 In Progress |
+| Navigation skeleton untuk 5 screens | NIM 123140167 | ✅ Done |
 | Deck Library Screen + ViewModel (CRUD deck) | NIM 123140167 | ⚪ Todo |
-| README lengkap (dokumen ini) | NIM 123140050 | 🟡 In Progress |
+| README lengkap  | NIM 123140050 | ✅ Done |
 
 **Deliverables Sprint 1:**
 - ✅ GitHub repository dengan semua collaborator
 - ✅ KMP project structure dengan Clean Architecture folders
 - ✅ GitHub Actions CI passing (badge `passing` di atas)
-- 🟡 README lengkap dengan team info, deskripsi, fitur, tech stack, arsitektur
-- 🟡 Project plan dengan task assignment (dokumen ini bagian "Project Plan")
+- ✅ README lengkap dengan team info, deskripsi, fitur, tech stack, arsitektur
+- ✅ Project plan dengan task assignment
 
 ### 📌 Sprint 2: Core Features (Minggu 12–13)
 
