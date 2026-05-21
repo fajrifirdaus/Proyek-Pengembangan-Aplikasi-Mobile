@@ -1,4 +1,4 @@
-package com.example.noteai.core.network
+package com.example.neurodeck.core.network
 
 /**
  * API Configuration - expect declaration
