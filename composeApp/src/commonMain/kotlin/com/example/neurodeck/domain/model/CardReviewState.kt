@@ -76,4 +76,6 @@ enum class ReviewRating(val quality: Int) {
 
     /** Apakah rating ini dianggap "lulus" untuk increment repetitions counter. */
     val isPassing: Boolean get() = quality >= 3
+
+    companion object  // ← tambah ini, biar bisa di-extend di mapper
 }
