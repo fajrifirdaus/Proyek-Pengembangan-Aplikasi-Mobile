@@ -1,17 +1,28 @@
 package com.example.neurodeck.presentation.navigation
 
 sealed class Screen(val route: String) {
-    object DeckLibrary : Screen("deck_library")
 
-    object ImportGenerate : Screen("import_generate")
+    data object DeckLibrary : Screen("deck_library")
 
-    object StudySession : Screen("study_session/{deckId}") {
-        fun createRoute(deckId: String): String {
-            return "study_session/$deckId"
-        }
+    data object ImportGenerate : Screen("import_generate")
+
+    data object Statistics : Screen("statistics")
+
+    data object Settings : Screen("settings")
+
+    data object CardList : Screen("card_list/{deckId}") {
+        fun createRoute(deckId: Long): String = "card_list/$deckId"
     }
 
-    object Statistics : Screen("statistics")
+    data object AddCard : Screen("add_card/{deckId}") {
+        fun createRoute(deckId: Long): String = "add_card/$deckId"
+    }
 
-    object Settings : Screen("settings")
+    data object StudySession : Screen("study_session/{deckId}") {
+        fun createRoute(deckId: Long): String = "study_session/$deckId"
+    }
+}
+
+object NavArgs {
+    const val DECK_ID = "deckId"
 }
