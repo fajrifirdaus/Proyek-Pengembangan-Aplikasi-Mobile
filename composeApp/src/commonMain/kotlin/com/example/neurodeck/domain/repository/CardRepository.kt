@@ -21,6 +21,9 @@ interface CardRepository {
     /** Stream kartu yang due untuk review di deck tertentu. */
     fun observeDueCards(deckId: Long, now: Instant): Flow<List<Card>>
 
+    /** Ambil 1 card sekali (snapshot, bukan flow). Untuk load form Edit. */
+    suspend fun getCardById(cardId: Long): com.example.neurodeck.domain.model.Card?
+
     /** Hitung jumlah kartu due across all decks (untuk Statistics). */
     suspend fun countAllDueCards(now: Instant): Long
 

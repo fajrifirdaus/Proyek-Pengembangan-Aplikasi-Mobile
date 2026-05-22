@@ -85,4 +85,26 @@ class DeckLibraryViewModel(
             }
         }
     }
+
+    /**
+     * Update title/description deck existing.
+     * Validation: title harus non-blank (sama dengan createDeck).
+     */
+    fun updateDeck(deck: com.example.neurodeck.domain.model.Deck, newTitle: String, newDescription: String) {
+        if (newTitle.isBlank()) return
+        viewModelScope.launch {
+            try {
+                repository.updateDeck(
+                    deck.copy(
+                        title = newTitle.trim(),
+                        description = newDescription.trim(),
+                    ),
+                )
+            } catch (e: Exception) {
+                _uiState.value = DeckLibraryUiState.Error(
+                    e.message ?: "Failed to update deck",
+                )
+            }
+        }
+    }
 }

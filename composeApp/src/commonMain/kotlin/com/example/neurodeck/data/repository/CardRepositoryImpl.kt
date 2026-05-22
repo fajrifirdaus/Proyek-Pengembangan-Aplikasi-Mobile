@@ -39,6 +39,11 @@ class CardRepositoryImpl(
             .mapToList(Dispatchers.IO)
             .map { rows -> rows.map { it.toDomain() } }
 
+    override suspend fun getCardById(cardId: Long): Card? =
+        withContext(Dispatchers.IO) {
+            cardQueries.selectById(cardId).executeAsOneOrNull()?.toDomain()
+        }
+
     override fun observeDueCards(deckId: Long, now: Instant): Flow<List<Card>> =
         cardQueries.selectDueByDeck(deckId, now.toEpochMilliseconds())
             .asFlow()

@@ -139,7 +139,7 @@ android {
             )
         }
     }
-    
+
     buildFeatures {
         buildConfig = true
     }
