@@ -1,5 +1,6 @@
 package com.example.neurodeck.presentation.screens.decklibrary
 
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,6 +43,8 @@ import com.example.neurodeck.presentation.components.EmptyState
 import com.example.neurodeck.presentation.components.ErrorMessage
 import com.example.neurodeck.presentation.components.LoadingIndicator
 import org.koin.compose.viewmodel.koinViewModel
+import androidx.compose.material.icons.filled.Edit
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,6 +54,8 @@ fun DeckLibraryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showCreateDialog by remember { mutableStateOf(false) }
+    var deckToEdit by remember { mutableStateOf<Deck?>(null) }
+
 
     Scaffold(
         topBar = {
@@ -66,6 +71,7 @@ fun DeckLibraryScreen(
             when (val state = uiState) {
                 DeckLibraryUiState.Loading -> LoadingIndicator()
 
+
                 DeckLibraryUiState.Empty -> EmptyState(
                     emoji = "🃏",
                     title = "Belum Ada Deck",
@@ -74,11 +80,14 @@ fun DeckLibraryScreen(
                     onPrimaryAction = { showCreateDialog = true },
                 )
 
+
                 is DeckLibraryUiState.Success -> DeckList(
                     decks = state.decks,
                     onDeckClick = onDeckClick,
+                    onEditClick = { deck -> deckToEdit = deck },
                     onDeleteClick = viewModel::deleteDeck,
                 )
+
 
                 is DeckLibraryUiState.Error -> ErrorMessage(
                     message = state.message,
@@ -87,23 +96,41 @@ fun DeckLibraryScreen(
         }
     }
 
+
+    // Dialog untuk CREATE
     if (showCreateDialog) {
-        CreateDeckDialog(
+        DeckFormDialog(
+            initialDeck = null,
             onDismiss = { showCreateDialog = false },
             onConfirm = { title, description ->
                 viewModel.createDeck(title, description) { newId ->
                     showCreateDialog = false
-                    onDeckClick(newId)  // langsung navigate ke deck baru
+                    onDeckClick(newId)
                 }
+            },
+        )
+    }
+
+
+    // Dialog untuk EDIT
+    deckToEdit?.let { deck ->
+        DeckFormDialog(
+            initialDeck = deck,
+            onDismiss = { deckToEdit = null },
+            onConfirm = { title, description ->
+                viewModel.updateDeck(deck, title, description)
+                deckToEdit = null
             },
         )
     }
 }
 
+
 @Composable
 private fun DeckList(
     decks: List<Deck>,
     onDeckClick: (Long) -> Unit,
+    onEditClick: (Deck) -> Unit,
     onDeleteClick: (Long) -> Unit,
 ) {
     LazyColumn(
@@ -114,19 +141,23 @@ private fun DeckList(
             DeckCard(
                 deck = deck,
                 onClick = { onDeckClick(deck.id) },
+                onEdit = { onEditClick(deck) },
                 onDelete = { onDeleteClick(deck.id) },
             )
         }
     }
 }
 
+
 @Composable
 private fun DeckCard(
     deck: Deck,
     onClick: () -> Unit,
+    onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
     var showDeleteConfirm by remember { mutableStateOf(false) }
+
 
     Card(
         modifier = Modifier
@@ -161,6 +192,13 @@ private fun DeckCard(
                     modifier = Modifier.padding(top = 8.dp),
                 )
             }
+            IconButton(onClick = onEdit) {
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = "Edit Deck",
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
             IconButton(onClick = { showDeleteConfirm = true }) {
                 Icon(
                     Icons.Default.Delete,
@@ -170,6 +208,7 @@ private fun DeckCard(
             }
         }
     }
+
 
     if (showDeleteConfirm) {
         AlertDialog(
@@ -203,17 +242,21 @@ private fun DeckCard(
     }
 }
 
+
 @Composable
-private fun CreateDeckDialog(
+private fun DeckFormDialog(
+    initialDeck: Deck?,
     onDismiss: () -> Unit,
     onConfirm: (title: String, description: String) -> Unit,
 ) {
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
+    val isEditMode = initialDeck != null
+    var title by remember { mutableStateOf(initialDeck?.title ?: "") }
+    var description by remember { mutableStateOf(initialDeck?.description ?: "") }
+
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Deck Baru") },
+        title = { Text(if (isEditMode) "Edit Deck" else "Deck Baru") },
         text = {
             Column {
                 OutlinedTextField(
@@ -238,7 +281,7 @@ private fun CreateDeckDialog(
                 onClick = { onConfirm(title, description) },
                 enabled = title.isNotBlank(),
             ) {
-                Text("Buat")
+                Text(if (isEditMode) "Simpan" else "Buat")
             }
         },
         dismissButton = {

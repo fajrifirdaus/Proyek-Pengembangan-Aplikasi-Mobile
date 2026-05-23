@@ -1,5 +1,6 @@
 package com.example.neurodeck.presentation.screens.decklibrary
 
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.neurodeck.domain.model.Deck
@@ -13,13 +14,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
-/**
- * State untuk Deck Library screen.
- *
- * Sealed interface = exhaustive when di Compose, compiler memaksa handle semua case.
- * Lebih aman dari class biasa dengan `isLoading: Boolean` + `error: String?` yang
- * bisa kombinasi invalid (loading=true tapi error juga di-set).
- */
+
 sealed interface DeckLibraryUiState {
     data object Loading : DeckLibraryUiState
     data object Empty : DeckLibraryUiState
@@ -27,16 +22,20 @@ sealed interface DeckLibraryUiState {
     data class Error(val message: String) : DeckLibraryUiState
 }
 
+
 class DeckLibraryViewModel(
     private val repository: DeckRepository,
 ) : ViewModel() {
 
+
     private val _uiState = MutableStateFlow<DeckLibraryUiState>(DeckLibraryUiState.Loading)
     val uiState: StateFlow<DeckLibraryUiState> = _uiState.asStateFlow()
+
 
     init {
         observeDecks()
     }
+
 
     private fun observeDecks() {
         repository.observeAllDecks()
@@ -55,13 +54,9 @@ class DeckLibraryViewModel(
             .launchIn(viewModelScope)
     }
 
-    /**
-     * Bikin deck baru lalu return ID supaya UI bisa navigate ke deck detail.
-     * onSuccess callback dipanggil dengan ID baru, supaya navigation dipicu dari UI layer
-     * (ViewModel tidak boleh tahu tentang NavController).
-     */
+
     fun createDeck(title: String, description: String = "", onSuccess: (Long) -> Unit) {
-        if (title.isBlank()) return  // validation sederhana
+        if (title.isBlank()) return  // validation
         viewModelScope.launch {
             try {
                 val newId = repository.createDeck(title.trim(), description.trim())
@@ -74,6 +69,7 @@ class DeckLibraryViewModel(
         }
     }
 
+
     fun deleteDeck(deckId: Long) {
         viewModelScope.launch {
             try {
@@ -81,6 +77,25 @@ class DeckLibraryViewModel(
             } catch (e: Exception) {
                 _uiState.value = DeckLibraryUiState.Error(
                     e.message ?: "Failed to delete deck",
+                )
+            }
+        }
+    }
+
+
+    fun updateDeck(deck: com.example.neurodeck.domain.model.Deck, newTitle: String, newDescription: String) {
+        if (newTitle.isBlank()) return
+        viewModelScope.launch {
+            try {
+                repository.updateDeck(
+                    deck.copy(
+                        title = newTitle.trim(),
+                        description = newDescription.trim(),
+                    ),
+                )
+            } catch (e: Exception) {
+                _uiState.value = DeckLibraryUiState.Error(
+                    e.message ?: "Failed to update deck",
                 )
             }
         }
