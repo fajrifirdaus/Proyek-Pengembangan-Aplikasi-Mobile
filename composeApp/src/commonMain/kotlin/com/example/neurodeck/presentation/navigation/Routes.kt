@@ -1,5 +1,14 @@
 package com.example.neurodeck.presentation.navigation
 
+/**
+ * Type-safe route definitions untuk NavHost.
+ *
+ * Convention: setiap Screen punya `route` (template path) dan optional
+ * `createRoute(args)` untuk build URL dengan argument value.
+ *
+ * Catatan: argument deckId dipakai sebagai Long (sesuai database ID type).
+ * createRoute() terima Long, jadi caller cukup kasih ID-nya tanpa convert manual.
+ */
 sealed class Screen(val route: String) {
 
     data object DeckLibrary : Screen("deck_library")

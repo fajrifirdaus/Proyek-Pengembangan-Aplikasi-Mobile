@@ -25,6 +25,12 @@ import com.example.neurodeck.presentation.screens.addcard.AddCardViewModel
 
 val networkModule = module {
     single { HttpClientFactory.create(enableLogging = true) }
+    single {
+        GeminiService(
+            httpClient = get(),
+            apiKey = getApiKey(),
+        )
+    }
 }
 
 
@@ -41,6 +47,7 @@ val databaseModule = module {
 val repositoryModule = module {
     single<DeckRepository> { DeckRepositoryImpl(get()) }
     single<CardRepository> { CardRepositoryImpl(get(), get()) }
+    single<AIRepository> { AIRepositoryImpl(get()) }
 }
 
 
