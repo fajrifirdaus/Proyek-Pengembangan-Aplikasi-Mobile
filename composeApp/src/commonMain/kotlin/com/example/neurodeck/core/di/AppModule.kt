@@ -3,12 +3,18 @@ package com.example.neurodeck.core.di
 import com.example.neurodeck.core.network.HttpClientFactory
 import com.example.neurodeck.core.util.DatabaseDriverFactory
 import com.example.neurodeck.data.local.NeuroDeckDatabase
+import com.example.neurodeck.data.local.datastore.DataStoreFactory
+import com.example.neurodeck.data.local.datastore.createDataStore
 import com.example.neurodeck.data.repository.CardRepositoryImpl
 import com.example.neurodeck.data.repository.DeckRepositoryImpl
+import com.example.neurodeck.data.repository.UserPreferencesRepositoryImpl
 import com.example.neurodeck.domain.repository.CardRepository
 import com.example.neurodeck.domain.repository.DeckRepository
+import com.example.neurodeck.domain.repository.UserPreferencesRepository
 import com.example.neurodeck.domain.usecase.CalculateNextReviewUseCase
 import com.example.neurodeck.presentation.screens.decklibrary.DeckLibraryViewModel
+import com.example.neurodeck.presentation.screens.editprofile.EditProfileViewModel
+import com.example.neurodeck.presentation.screens.profile.ProfileViewModel
 import com.example.neurodeck.presentation.screens.studysession.StudySessionViewModel
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
@@ -45,6 +51,10 @@ val networkModule = module {
 
 val databaseModule = module {
     single { NeuroDeckDatabase(get<DatabaseDriverFactory>().createDriver()) }
+
+    // DataStore<Preferences> singleton — JANGAN buat di tempat lain karena
+    // DataStore tidak boleh ada 2 instance untuk file yang sama.
+    single { createDataStore(get<DataStoreFactory>()) }
 }
 
 // ==================== REPOSITORY MODULE ====================
@@ -54,6 +64,7 @@ val repositoryModule = module {
     single<CardRepository> { CardRepositoryImpl(get(), get()) }
     single<AIRepository> { AIRepositoryImpl(get()) }
     single<ReviewRecordRepository> { ReviewRecordRepositoryImpl(get()) }
+    single<UserPreferencesRepository> { UserPreferencesRepositoryImpl(get()) }
 }
 
 // ==================== USE CASE MODULE ====================
@@ -105,6 +116,18 @@ val viewModelModule = module {
             cardRepository = get(),
             aiRepository = get(),
         )
+    }
+
+    // P3e additions
+    viewModel {
+        ProfileViewModel(
+            userPreferencesRepository = get(),
+            deckRepository = get(),
+            reviewRecordRepository = get(),
+        )
+    }
+    viewModel {
+        EditProfileViewModel(userPreferencesRepository = get())
     }
 }
 

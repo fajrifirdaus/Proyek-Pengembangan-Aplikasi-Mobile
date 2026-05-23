@@ -25,13 +25,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
+import com.example.neurodeck.presentation.screens.about.AboutScreen
 import com.example.neurodeck.presentation.screens.addcard.AddCardScreen
 import com.example.neurodeck.presentation.screens.cardlist.CardListScreen
 import com.example.neurodeck.presentation.screens.createdeck.CreateDeckScreen
 import com.example.neurodeck.presentation.screens.decklibrary.DeckLibraryScreen
 import com.example.neurodeck.presentation.screens.editcard.EditCardScreen
+import com.example.neurodeck.presentation.screens.editprofile.EditProfileScreen
 import com.example.neurodeck.presentation.screens.home.HomeScreen
 import com.example.neurodeck.presentation.screens.importgenerate.ImportGenerateScreen
+import com.example.neurodeck.presentation.screens.profile.ProfileScreen
 import com.example.neurodeck.presentation.screens.studysession.StudySessionScreen
 import kotlinx.coroutines.launch
 
@@ -202,12 +205,11 @@ fun AppNavHost(
                     )
                 }
 
-                // 👤 PROFILE TAB — placeholder, akan di-build di P3e
+                // 👤 PROFILE TAB — User info + Settings + Data Management (P3e)
                 composable(route = Screen.Profile.route) {
-                    PlaceholderTabScreen(
-                        emoji = "👤",
-                        title = "Profil",
-                        description = "User info + Settings + Data Management\n(Akan dibuat di Prioritas 3e)",
+                    ProfileScreen(
+                        onEditProfile = { navController.navigate(Screen.EditProfile.route) },
+                        onAbout = { navController.navigate(Screen.About.route) },
                     )
                 }
 
@@ -323,12 +325,11 @@ fun AppNavHost(
                     )
                 }
 
-                // EDIT PROFILE — placeholder
+                // EDIT PROFILE — real screen P3e
                 composable(route = Screen.EditProfile.route) {
-                    PlaceholderSubScreen(
-                        title = "Edit Profil",
-                        description = "Form edit nama, username, bio, avatar.\n(Akan dibuat di Prioritas 3e)",
+                    EditProfileScreen(
                         onBack = { navController.popBackStack() },
+                        onSaved = { navController.popBackStack() },
                     )
                 }
 
@@ -341,11 +342,9 @@ fun AppNavHost(
                     )
                 }
 
-                // ABOUT — placeholder
+                // ABOUT — real screen P3e
                 composable(route = Screen.About.route) {
-                    PlaceholderSubScreen(
-                        title = "Tentang NeuroDeck",
-                        description = "App version, team info, GitHub link.\n(Akan dibuat di Prioritas 3e)",
+                    AboutScreen(
                         onBack = { navController.popBackStack() },
                     )
                 }
