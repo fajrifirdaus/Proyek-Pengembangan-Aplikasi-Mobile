@@ -90,6 +90,82 @@ class GeminiService(
         return parseFlashcardsJson(rawText)
     }
 
+    // ════════════════════════════════════════════════════════════════════════
+    // CHAT — Multi-turn conversation untuk AI Tutor (P3f)
+    // ════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Multi-turn chat dengan AI Tutor.
+     *
+     * History pattern Gemini API: kirim semua turn previous dalam contents[]
+     * dengan role alternating "user" dan "model". Pesan pertama (sistem prompt)
+     * kita prepend sebagai user role karena Gemini API tidak support "system"
+     * role di v1beta (akan support di v1 future).
+     *
+     * @param history  List pesan past turns (oldest first).
+     *                 Pair<role, content>: role "user" atau "model".
+     * @return Plain text reply dari AI (bisa markdown).
+     * @throws GeminiException dengan message user-friendly.
+     */
+    suspend fun chatWithHistory(history: List<Pair<String, String>>): String {
+        // Build contents[] dari history + system prompt prepended sebagai first user msg
+        // (workaround karena Gemini v1beta belum support role=system).
+        val contents = buildList {
+            // System prompt + filler model reply supaya AI "tahu" persona-nya
+            // tanpa polluting actual conversation.
+            add(Content(role = "user", parts = listOf(Part(text = AI_TUTOR_SYSTEM_PROMPT))))
+            add(Content(role = "model", parts = listOf(Part(text = AI_TUTOR_GREETING))))
+
+            // Real history dari user
+            history.forEach { (role, content) ->
+                add(Content(role = role, parts = listOf(Part(text = content))))
+            }
+        }
+
+        val request = GeminiRequest(
+            contents = contents,
+            generationConfig = com.example.neurodeck.data.remote.dto.GenerationConfig(
+                temperature = 0.8,             // Chat lebih conversational, sedikit naikkan
+                maxOutputTokens = 2048,        // Reply ~500-1000 words cukup
+                responseMimeType = "text/plain",  // Plain text untuk chat (bukan JSON)
+            ),
+        )
+
+        val response: HttpResponse = try {
+            httpClient.post(GEMINI_ENDPOINT) {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+                url { parameters.append("key", apiKey) }
+            }
+        } catch (e: Exception) {
+            throw GeminiException(
+                "Koneksi gagal. Pastikan internet Anda menyala dan coba lagi.",
+                cause = e,
+            )
+        }
+
+        if (!response.status.isSuccess()) {
+            throw mapHttpErrorToException(response.status)
+        }
+
+        val geminiResponse: GeminiResponse = try {
+            response.body()
+        } catch (e: Exception) {
+            throw GeminiException(
+                "Response dari AI tidak bisa diparsing. Coba lagi.",
+                cause = e,
+            )
+        }
+
+        return geminiResponse.candidates
+            .firstOrNull()
+            ?.content
+            ?.parts
+            ?.firstOrNull()
+            ?.text
+            ?: throw GeminiException("AI tidak memberikan jawaban. Coba pertanyaan lain.")
+    }
+
     // ==================== HELPERS ====================
 
     private fun buildPrompt(material: String): String = """
@@ -152,6 +228,37 @@ class GeminiService(
             isLenient = true
             explicitNulls = false
         }
+
+        /**
+         * System prompt untuk persona AI Tutor NeuroDeck.
+         * Di-prepend di setiap chat session (workaround karena Gemini v1beta
+         * belum support role=system, jadi pakai role=user untuk system msg).
+         */
+        private const val AI_TUTOR_SYSTEM_PROMPT = """
+            You are NeuroDeck Tutor, an AI study assistant for Indonesian university students.
+
+            Your role:
+            - Help students understand concepts clearly and patiently.
+            - Use simple analogies when explaining abstract concepts.
+            - Respond in the SAME language as the user's question (Indonesian or English).
+            - Be encouraging and supportive — never condescending.
+            - Use markdown sparingly for emphasis (bold for key terms, code blocks for code).
+            - For coding concepts, provide short illustrative examples.
+            - Keep responses focused: 2-5 paragraphs typically. Long enough to teach,
+              short enough to read on mobile.
+            - Encourage active recall: after explaining, suggest 1-2 follow-up questions
+              the student could ponder.
+
+            What NOT to do:
+            - Don't write essays. Mobile-first means concise.
+            - Don't pretend to know things you're not sure about — say "Saya tidak yakin" honestly.
+            - Don't generate flashcards in chat (that's a separate feature in the app).
+        """
+
+        /** Filler initial AI response untuk warm-up conversation context. */
+        private const val AI_TUTOR_GREETING =
+            "Halo! Saya NeuroDeck Tutor. Ada konsep yang ingin kamu pahami? " +
+                    "Tanyakan saja — saya bantu jelaskan dengan analogi sederhana. ✨"
     }
 }
 

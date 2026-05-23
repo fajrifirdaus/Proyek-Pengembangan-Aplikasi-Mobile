@@ -22,4 +22,14 @@ interface AIRepository {
      * @throws Exception dengan message user-friendly kalau gagal (network, rate limit, dll).
      */
     suspend fun generateFlashcards(material: String): List<Pair<String, String>>
+
+    /**
+     * Multi-turn chat dengan AI Tutor (P3f).
+     *
+     * @param history List of (role, content). Role "user" untuk user msg,
+     *                "model" untuk AI reply previous turns. Oldest first.
+     * @return Plain text reply dari AI (bisa markdown).
+     * @throws Exception dengan message user-friendly kalau gagal.
+     */
+    suspend fun chatWithHistory(history: List<Pair<String, String>>): String
 }

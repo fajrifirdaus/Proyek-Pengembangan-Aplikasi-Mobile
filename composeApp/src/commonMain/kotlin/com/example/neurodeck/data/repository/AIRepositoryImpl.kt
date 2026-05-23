@@ -29,4 +29,14 @@ class AIRepositoryImpl(
                 .generateFlashcards(material.trim())
                 .map { dto -> dto.front to dto.back }
         }
+
+    override suspend fun chatWithHistory(history: List<Pair<String, String>>): String =
+        withContext(Dispatchers.Default) {
+            require(history.isNotEmpty()) { "History tidak boleh kosong" }
+            // Last message should be from user (else AI tidak punya pertanyaan untuk dijawab)
+            require(history.last().first == "user") {
+                "Last message in history harus dari 'user' (current question)"
+            }
+            geminiService.chatWithHistory(history)
+        }
 }

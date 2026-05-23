@@ -27,6 +27,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.example.neurodeck.presentation.screens.about.AboutScreen
 import com.example.neurodeck.presentation.screens.addcard.AddCardScreen
+import com.example.neurodeck.presentation.screens.aichat.AIChatScreen
 import com.example.neurodeck.presentation.screens.cardlist.CardListScreen
 import com.example.neurodeck.presentation.screens.createdeck.CreateDeckScreen
 import com.example.neurodeck.presentation.screens.decklibrary.DeckLibraryScreen
@@ -35,6 +36,7 @@ import com.example.neurodeck.presentation.screens.editprofile.EditProfileScreen
 import com.example.neurodeck.presentation.screens.home.HomeScreen
 import com.example.neurodeck.presentation.screens.importgenerate.ImportGenerateScreen
 import com.example.neurodeck.presentation.screens.profile.ProfileScreen
+import com.example.neurodeck.presentation.screens.stats.StatsScreen
 import com.example.neurodeck.presentation.screens.studysession.StudySessionScreen
 import kotlinx.coroutines.launch
 
@@ -187,22 +189,14 @@ fun AppNavHost(
                     )
                 }
 
-                // 💬 AI CHAT TAB — placeholder, akan di-build di P3f
+                // 💬 AI CHAT TAB — Tutor AI conversational (P3f)
                 composable(route = Screen.AIChat.route) {
-                    PlaceholderTabScreen(
-                        emoji = "💬",
-                        title = "AI Chat",
-                        description = "Tutor AI conversational\n(Akan dibuat di Prioritas 3f)",
-                    )
+                    AIChatScreen()
                 }
 
-                // 📊 STATS TAB — placeholder, akan di-build di P4
+                // 📊 STATS TAB — Analytics belajar mendalam (P4)
                 composable(route = Screen.Stats.route) {
-                    PlaceholderTabScreen(
-                        emoji = "📊",
-                        title = "Statistik",
-                        description = "Analytics belajar (forgetting curve, heatmap)\n(Akan dibuat di Prioritas 4)",
-                    )
+                    StatsScreen()
                 }
 
                 // 👤 PROFILE TAB — User info + Settings + Data Management (P3e)

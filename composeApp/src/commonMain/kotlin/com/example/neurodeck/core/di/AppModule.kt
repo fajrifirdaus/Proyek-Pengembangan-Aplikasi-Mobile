@@ -8,12 +8,16 @@ import com.example.neurodeck.data.local.datastore.createDataStore
 import com.example.neurodeck.data.repository.CardRepositoryImpl
 import com.example.neurodeck.data.repository.DeckRepositoryImpl
 import com.example.neurodeck.data.repository.UserPreferencesRepositoryImpl
+import com.example.neurodeck.data.repository.ChatRepositoryImpl
 import com.example.neurodeck.domain.repository.CardRepository
 import com.example.neurodeck.domain.repository.DeckRepository
 import com.example.neurodeck.domain.repository.UserPreferencesRepository
+import com.example.neurodeck.domain.repository.ChatRepository
 import com.example.neurodeck.domain.usecase.CalculateNextReviewUseCase
 import com.example.neurodeck.presentation.screens.decklibrary.DeckLibraryViewModel
 import com.example.neurodeck.presentation.screens.editprofile.EditProfileViewModel
+import com.example.neurodeck.presentation.screens.aichat.AIChatViewModel
+import com.example.neurodeck.presentation.screens.stats.StatsViewModel
 import com.example.neurodeck.presentation.screens.profile.ProfileViewModel
 import com.example.neurodeck.presentation.screens.studysession.StudySessionViewModel
 import org.koin.core.context.startKoin
@@ -65,6 +69,7 @@ val repositoryModule = module {
     single<AIRepository> { AIRepositoryImpl(get()) }
     single<ReviewRecordRepository> { ReviewRecordRepositoryImpl(get()) }
     single<UserPreferencesRepository> { UserPreferencesRepositoryImpl(get()) }
+    single<ChatRepository> { ChatRepositoryImpl(database = get(), aiRepository = get()) }
 }
 
 // ==================== USE CASE MODULE ====================
@@ -128,6 +133,18 @@ val viewModelModule = module {
     }
     viewModel {
         EditProfileViewModel(userPreferencesRepository = get())
+    }
+
+    // P3f additions
+    viewModel { AIChatViewModel(chatRepository = get()) }
+
+    // P4 additions
+    viewModel {
+        StatsViewModel(
+            deckRepository = get(),
+            cardRepository = get(),
+            reviewRecordRepository = get(),
+        )
     }
 }
 

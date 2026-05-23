@@ -49,4 +49,35 @@ interface ReviewRecordRepository {
      * Dipakai di Profile tab achievement stats.
      */
     suspend fun getTotalReviews(): Int
+
+    // ════════════════════════════════════════════════════════════════════════
+    // STATS-SPECIFIC METHODS (P4)
+    // ════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Hitung total reviews dalam range periode tertentu.
+     * Period start adalah midnight di local timezone, end adalah `now`.
+     *
+     * @param fromInclusive   Mulai timestamp (inclusive).
+     * @param toExclusive     End timestamp (exclusive, biasanya `now`).
+     */
+    suspend fun countReviewsInRange(fromInclusive: Instant, toExclusive: Instant): Int
+
+    /**
+     * Hitung accuracy (% review yang passing rating >= 3) dalam range.
+     * Return 0.0 kalau tidak ada review di range itu.
+     */
+    suspend fun getAccuracyInRange(fromInclusive: Instant, toExclusive: Instant): Double
+
+    /**
+     * Activity per hari dalam range (untuk bar chart).
+     * Return Map<dayOffset, count>:
+     *   - dayOffset 0 = hari ini
+     *   - dayOffset 1 = kemarin
+     *   - dayOffset 6 = 6 hari lalu (untuk 7 days view)
+     *
+     * @param daysBack  Berapa hari ke belakang (7 untuk weekly, 30 untuk monthly).
+     * @param now       Reference time, biasanya Clock.System.now().
+     */
+    suspend fun getDailyActivity(daysBack: Int, now: Instant): Map<Int, Int>
 }

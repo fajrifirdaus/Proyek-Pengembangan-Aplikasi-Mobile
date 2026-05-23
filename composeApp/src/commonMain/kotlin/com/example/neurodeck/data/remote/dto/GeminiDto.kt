@@ -34,11 +34,15 @@ data class GenerationConfig(
     /** Temperature 0.0-2.0, lower = lebih deterministic. 0.7 = balance creativity & consistency. */
     val temperature: Double = 0.7,
 
-    /** Hard cap output length. 4096 tokens cukup untuk 10-15 cards. */
+    /** Hard cap output length. 4096 tokens cukup untuk 10-15 cards atau jawaban chat panjang. */
     @SerialName("maxOutputTokens")
     val maxOutputTokens: Int = 4096,
 
-    /** Response format. Kita pakai application/json untuk structured output (lebih reliable parse). */
+    /**
+     * Response format. Default "application/json" untuk flashcard generation
+     * (structured output, lebih reliable parse). Untuk AI Chat, override jadi
+     * "text/plain" supaya AI bebas markdown/prosa.
+     */
     @SerialName("responseMimeType")
     val responseMimeType: String = "application/json",
 )

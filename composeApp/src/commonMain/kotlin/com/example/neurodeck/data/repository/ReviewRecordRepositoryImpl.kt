@@ -9,6 +9,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.minus
+import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.DateTimeUnit
 
@@ -92,6 +93,67 @@ class ReviewRecordRepositoryImpl(
 
     override suspend fun getTotalReviews(): Int = withContext(Dispatchers.IO) {
         queries.countAll().executeAsOne().toInt()
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // STATS-SPECIFIC METHODS (P4)
+    // ════════════════════════════════════════════════════════════════════════
+
+    override suspend fun countReviewsInRange(
+        fromInclusive: Instant,
+        toExclusive: Instant,
+    ): Int = withContext(Dispatchers.IO) {
+        queries.countReviewsBetween(
+            fromMillis = fromInclusive.toEpochMilliseconds(),
+            toMillis = toExclusive.toEpochMilliseconds(),
+        ).executeAsOne().toInt()
+    }
+
+    override suspend fun getAccuracyInRange(
+        fromInclusive: Instant,
+        toExclusive: Instant,
+    ): Double = withContext(Dispatchers.IO) {
+        val fromMillis = fromInclusive.toEpochMilliseconds()
+        val toMillis = toExclusive.toEpochMilliseconds()
+        val total = queries.countReviewsBetween(fromMillis, toMillis).executeAsOne()
+        if (total == 0L) return@withContext 0.0
+        val passing = queries.countPassingBetween(fromMillis, toMillis).executeAsOne()
+        // Return value 0.0 - 1.0 (UI akan multiply 100 untuk display %)
+        passing.toDouble() / total.toDouble()
+    }
+
+    override suspend fun getDailyActivity(
+        daysBack: Int,
+        now: Instant,
+    ): Map<Int, Int> = withContext(Dispatchers.IO) {
+        val tz = TimeZone.currentSystemDefault()
+        val today = now.toLocalDateTime(tz).date
+
+        // Ambil semua reviews dalam range (1 query single + grouping in-memory).
+        // Alternative: N queries (1 per day) — lebih slow karena overhead query repeat.
+        // In-memory grouping cocok untuk skala mahasiswa (~1000 reviews per bulan).
+        val rangeStart = today.minus(daysBack.toLong() - 1, DateTimeUnit.DAY)
+            .atStartOfDayIn(tz)
+            .toEpochMilliseconds()
+        val rangeEnd = today.plus(1, DateTimeUnit.DAY)
+            .atStartOfDayIn(tz)
+            .toEpochMilliseconds()
+
+        val timestamps = queries.selectAllReviewedAt().executeAsList()
+            .filter { it in rangeStart..<rangeEnd }
+
+        // Group by day offset (0 = today, 1 = yesterday, ...)
+        val grouped = timestamps.groupBy { ts ->
+            val date = Instant.fromEpochMilliseconds(ts).toLocalDateTime(tz).date
+            // Hitung selisih hari dari today
+            (today.toEpochDays() - date.toEpochDays()).toInt()
+        }
+
+        // Build map dengan SEMUA dayOffset (termasuk yang 0 reviews)
+        // supaya UI bar chart konsisten lebar/kolom.
+        (0 until daysBack).associateWith { dayOffset ->
+            grouped[dayOffset]?.size ?: 0
+        }
     }
 
     private companion object {
