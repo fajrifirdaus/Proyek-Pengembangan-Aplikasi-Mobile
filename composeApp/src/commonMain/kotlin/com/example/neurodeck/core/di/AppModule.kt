@@ -1,6 +1,5 @@
 package com.example.neurodeck.core.di
 
-
 import com.example.neurodeck.core.network.HttpClientFactory
 import com.example.neurodeck.core.util.DatabaseDriverFactory
 import com.example.neurodeck.data.local.NeuroDeckDatabase
@@ -18,10 +17,17 @@ import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.module
 import com.example.neurodeck.presentation.screens.cardlist.CardListViewModel
 import com.example.neurodeck.presentation.screens.addcard.AddCardViewModel
+import com.example.neurodeck.presentation.screens.editcard.EditCardViewModel
+import com.example.neurodeck.presentation.screens.createdeck.CreateDeckViewModel
+import com.example.neurodeck.presentation.screens.home.HomeViewModel
+import com.example.neurodeck.presentation.screens.importgenerate.ImportGenerateViewModel
+import com.example.neurodeck.data.remote.api.GeminiService
+import com.example.neurodeck.data.repository.AIRepositoryImpl
+import com.example.neurodeck.data.repository.ReviewRecordRepositoryImpl
+import com.example.neurodeck.domain.repository.AIRepository
+import com.example.neurodeck.domain.repository.ReviewRecordRepository
 
-
-//NETWORK MODULE
-
+// ==================== NETWORK MODULE ====================
 
 val networkModule = module {
     single { HttpClientFactory.create(enableLogging = true) }
@@ -33,36 +39,35 @@ val networkModule = module {
     }
 }
 
-
-//DATABASE MODULE
+// ==================== DATABASE MODULE ====================
+// NeuroDeckDatabase di-instantiate sekali (singleton) dengan SqlDriver dari
+// DatabaseDriverFactory yang di-provide platform-specific module (androidModule/iosModule).
 
 val databaseModule = module {
     single { NeuroDeckDatabase(get<DatabaseDriverFactory>().createDriver()) }
 }
 
-
-// REPOSITORY MODULE
-
+// ==================== REPOSITORY MODULE ====================
 
 val repositoryModule = module {
     single<DeckRepository> { DeckRepositoryImpl(get()) }
     single<CardRepository> { CardRepositoryImpl(get(), get()) }
     single<AIRepository> { AIRepositoryImpl(get()) }
+    single<ReviewRecordRepository> { ReviewRecordRepositoryImpl(get()) }
 }
 
-
-// USE CASE MODULE
+// ==================== USE CASE MODULE ====================
+// Use case di-register sebagai single karena stateless dan reusable.
 
 val useCaseModule = module {
     single { CalculateNextReviewUseCase() }
 }
 
-
-//VIEWMODEL MODULE
-
+// ==================== VIEWMODEL MODULE ====================
 
 val viewModelModule = module {
     viewModel { DeckLibraryViewModel(get()) }
+    viewModel { HomeViewModel(get(), get(), get()) }
     viewModel { params ->
         StudySessionViewModel(
             deckId = params.get(),
@@ -82,11 +87,28 @@ val viewModelModule = module {
             cardRepository = get(),
         )
     }
+
+    viewModel { params ->
+        EditCardViewModel(
+            cardId = params.get(),
+            cardRepository = get(),
+        )
+    }
+
+    // P3d additions
+    viewModel { CreateDeckViewModel(deckRepository = get()) }
+
+    viewModel { params ->
+        ImportGenerateViewModel(
+            deckId = params.get(),
+            deckRepository = get(),
+            cardRepository = get(),
+            aiRepository = get(),
+        )
+    }
 }
 
-
-//SHARED MODULES
-
+// ==================== SHARED MODULES ====================
 
 val sharedModules = listOf(
     networkModule,
@@ -96,9 +118,7 @@ val sharedModules = listOf(
     viewModelModule,
 )
 
-
-//INIT FUNCTION
-
+// ==================== INIT FUNCTION ====================
 
 fun initKoin(
     platformModules: List<Module> = emptyList(),
@@ -109,3 +129,9 @@ fun initKoin(
         modules(platformModules + sharedModules)
     }
 }
+// ==================== PLATFORM-SPECIFIC: API KEY ====================
+// API key di-load berbeda per platform:
+// - Android: dari BuildConfig (di-inject saat build via local.properties)
+// - iOS    : hardcoded (placeholder, akan di-implement nanti)
+
+expect fun getApiKey(): String

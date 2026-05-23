@@ -51,3 +51,16 @@ SELECT *
 FROM ReviewRecordEntity
 WHERE cardId = :cardId
 ORDER BY reviewedAt DESC;
+
+-- Untuk hitung streak: ambil SEMUA timestamp review (descending).
+-- Repository akan group by hari (local time) lalu count consecutive days.
+-- Lebih akurat daripada hanya pakai selectLastReviewedAt yang miss
+-- detail antar-tanggal.
+selectAllReviewedAt:
+SELECT reviewedAt
+FROM ReviewRecordEntity
+ORDER BY reviewedAt DESC;
+
+-- Total lifetime reviews (untuk Profile achievement stats).
+countAll:
+SELECT COUNT(*) FROM ReviewRecordEntity;
