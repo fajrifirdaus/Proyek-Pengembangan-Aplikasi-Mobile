@@ -25,6 +25,7 @@ import com.example.neurodeck.presentation.components.LoadingIndicator
 import com.example.neurodeck.presentation.components.SectionTitle
 import com.example.neurodeck.presentation.screens.stats.components.BigStatCard
 import com.example.neurodeck.presentation.screens.stats.components.CardStatusBars
+import com.example.neurodeck.presentation.screens.stats.components.ForgettingCurveChart
 import com.example.neurodeck.presentation.screens.stats.components.PeriodFilterChips
 import com.example.neurodeck.presentation.screens.stats.components.WeeklyBarChart
 import org.koin.compose.viewmodel.koinViewModel
@@ -157,6 +158,14 @@ private fun StatsSuccessContent(
         item { SectionTitle(text = "Progres Pembelajaran") }
         item {
             CardStatusBars(breakdown = state.cardsByStatus)
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        // 5. FORGETTING CURVE (P4 STRETCH GOAL ⭐)
+        // ════════════════════════════════════════════════════════════════════
+        item { SectionTitle(text = "Sains di Balik NeuroDeck") }
+        item {
+            ForgettingCurveChart()
         }
 
         // Bottom spacer
