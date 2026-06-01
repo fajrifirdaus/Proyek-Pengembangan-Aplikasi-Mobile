@@ -39,22 +39,6 @@ import neurodeck.composeapp.generated.resources.Res
 import neurodeck.composeapp.generated.resources.neurodeck_logo
 import org.jetbrains.compose.resources.painterResource
 
-// ════════════════════════════════════════════════════════════════════════════
-// AboutScreen.kt — Sprint 2 P3e + UI POLISH (Vivid Logic theme)
-//
-// Perubahan UI:
-//   - Logo Image di white circle container (signature style)
-//   - StickyNoteBadge untuk Versi (yellow accent)
-//   - OutlinedCard dengan border tegas untuk tim + tech stack
-//   - Section dengan SectionTitle uppercase (Vivid Logic header style)
-//
-// Logo loading:
-//   Pakai painterResource(Res.drawable.neurodeck_logo) — file PNG harus ada di:
-//   composeApp/src/commonMain/composeResources/drawable/neurodeck_logo.png
-//
-//   Filename harus lowercase + underscore + ekstensi .png/.jpg.
-// ════════════════════════════════════════════════════════════════════════════
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutScreen(
@@ -145,7 +129,7 @@ fun AboutScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                     InfoRow(
                         label = "Anggota Tim",
-                        value = "• Dev A — NIM 123140050\n• Dev B — NIM 123140167",
+                        value = "• Muhammad Fajri Firdaus — NIM 123140050\n• Nadya Shafwa Yusuf — NIM 123140167",
                     )
                 }
             }
@@ -182,6 +166,19 @@ fun AboutScreen(
                 shape = RoundedCornerShape(14.dp),
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "GitHub Repository",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = GITHUB_REPOSITORY,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    )
                     Text(
                         text = "GitHub Branch",
                         style = MaterialTheme.typography.labelSmall,
@@ -242,6 +239,8 @@ private const val APP_VERSION = "v0.2.0 · Sprint 2 Build"
 private const val APP_TAGLINE =
     "Aplikasi flashcard cerdas dengan SM-2 spaced repetition + AI Tutor."
 private const val GITHUB_BRANCH = "project/123140050-123140167-NeuroDeck"
+
+private const val GITHUB_REPOSITORY = "https://github.com/fajrifirdaus/Proyek-Pengembangan-Aplikasi-Mobile.git"
 private const val TECH_STACK =
     "• Kotlin Multiplatform 2.0.21\n" +
             "• Compose Multiplatform 1.7.0\n" +
