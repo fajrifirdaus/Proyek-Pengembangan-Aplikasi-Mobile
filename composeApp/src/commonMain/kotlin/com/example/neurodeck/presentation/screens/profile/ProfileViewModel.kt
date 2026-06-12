@@ -122,8 +122,14 @@ class ProfileViewModel(
         viewModelScope.launch {
             try {
                 userPreferencesRepository.setThemeMode(mode)
+                val label = when (mode) {
+                    ThemeMode.Light -> "Light"
+                    ThemeMode.Dark -> "Dark"
+                    ThemeMode.System -> "System"
+                }
+                _snackbar.value = "✅ Mode tampilan diubah ke $label"
             } catch (e: Exception) {
-                _snackbar.value = "Gagal mengganti theme: ${e.message ?: "unknown"}"
+                _snackbar.value = "Gagal mengganti tema: ${e.message ?: "unknown"}"
             }
         }
     }

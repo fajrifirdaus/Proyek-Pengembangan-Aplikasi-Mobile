@@ -1,11 +1,11 @@
 package com.example.neurodeck.presentation.screens.profile
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.ui.layout.ContentScale
-import coil3.compose.AsyncImage
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,16 +28,16 @@ import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.SettingsBrightness
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,8 +51,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import com.example.neurodeck.domain.model.ThemeMode
 import com.example.neurodeck.presentation.components.ConfirmDialog
 import com.example.neurodeck.presentation.components.LoadingIndicator
@@ -73,19 +75,29 @@ fun ProfileScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showResetConfirm by remember { mutableStateOf(false) }
     var showFinalResetConfirm by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Observe snackbarMessage dari ViewModel (ganti tema, reset, error)
+    LaunchedEffect(uiState.snackbarMessage) {
+        uiState.snackbarMessage?.let { msg ->
+            snackbarHostState.showSnackbar(msg)
+            viewModel.consumeSnackbar()
+        }
+    }
 
     if (uiState.isLoading) {
         LoadingIndicator()
         return
     }
 
+    // Tidak pakai Scaffold — TopAppBar sudah dihandle AppNavHost (main tab)
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 16.dp),
+            contentPadding = PaddingValues(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // 1. HEADER (avatar + name + bio + Edit button)
+            // 1. HEADER
             item {
                 ProfileHeader(
                     name = uiState.profile.name,
@@ -120,8 +132,8 @@ fun ProfileScreen(
                     icon = Icons.Outlined.Notifications,
                     label = "Notifikasi",
                     subtitle = "Reminder belajar harian",
-                    trailing = "Coming Sprint 4",
-                    onClick = { /* no-op Sprint 2 */ },
+                    trailing = "Coming Soon",
+                    onClick = { },
                 )
             }
             item {
@@ -130,7 +142,7 @@ fun ProfileScreen(
                     label = "Bahasa",
                     subtitle = "Bahasa Indonesia",
                     trailing = "ID",
-                    onClick = { /* no-op Sprint 2 */ },
+                    onClick = { },
                 )
             }
 
@@ -157,28 +169,26 @@ fun ProfileScreen(
                 )
             }
 
-            // Bottom spacer
             item { Spacer(modifier = Modifier.height(16.dp)) }
         }
 
-        // Snackbar untuk feedback action (reset success, error, dll)
-        uiState.snackbarMessage?.let { msg ->
-            LaunchedEffect(msg) {
-                kotlinx.coroutines.delay(3000)
-                viewModel.consumeSnackbar()
-            }
+        // SNACKBAR — manual di pojok bawah (tidak pakai Scaffold supaya tidak double padding)
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 80.dp),
+        ) { data ->
             Snackbar(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp),
-            ) {
-                Text(text = msg)
-            }
+                snackbarData = data,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                shape = RoundedCornerShape(12.dp),
+            )
         }
     }
 
     // RESET CONFIRMATION DIALOGS (double-confirm)
-
     if (showResetConfirm) {
         ConfirmDialog(
             title = "Reset Semua Data?",
@@ -208,7 +218,7 @@ fun ProfileScreen(
     }
 }
 
-// PRIVATE COMPONENTS
+// ── Private components ────────────────────────────────────────────────────────
 
 @Composable
 private fun ProfileHeader(
@@ -239,9 +249,7 @@ private fun ProfileHeader(
                         AsyncImage(
                             model = avatarUri,
                             contentDescription = "Foto profil",
-                            modifier = Modifier
-                                .size(72.dp)
-                                .clip(CircleShape),
+                            modifier = Modifier.size(72.dp).clip(CircleShape),
                             contentScale = ContentScale.Crop,
                         )
                     } else {
@@ -275,7 +283,6 @@ private fun ProfileHeader(
                     )
                 }
             }
-
             if (bio.isNotBlank()) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
@@ -296,38 +303,16 @@ private fun AchievementGrid(
     streakDays: Int,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            AchievementCard(
-                value = totalDecks.toString(),
-                label = "Total Decks",
-                accentColor = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.weight(1f),
-            )
-            AchievementCard(
-                value = totalCards.toString(),
-                label = "Total Kartu",
-                accentColor = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.weight(1f),
-            )
+            AchievementCard("$totalDecks", "Total Decks", MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+            AchievementCard("$totalCards", "Total Kartu", MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            AchievementCard(
-                value = totalReviews.toString(),
-                label = "Total Review",
-                accentColor = MaterialTheme.colorScheme.tertiary,
-                modifier = Modifier.weight(1f),
-            )
-            AchievementCard(
-                value = "$streakDays hari",
-                label = "Streak",
-                accentColor = NeurodeckTheme.extras.streakIcon,
-                modifier = Modifier.weight(1f),
-            )
+            AchievementCard("$totalReviews", "Total Review", MaterialTheme.colorScheme.tertiary, Modifier.weight(1f))
+            AchievementCard("$streakDays hari", "Streak", NeurodeckTheme.extras.streakIcon, Modifier.weight(1f))
         }
     }
 }
@@ -336,116 +321,63 @@ private fun AchievementGrid(
 private fun AchievementCard(
     value: String,
     label: String,
+    accentColor: Color,
     modifier: Modifier = Modifier,
-    accentColor: Color = MaterialTheme.colorScheme.primary,
 ) {
     OutlinedCard(
         modifier = modifier,
-        colors = CardDefaults.outlinedCardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = RoundedCornerShape(16.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = accentColor,
-            )
+            Text(value, style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold, color = accentColor)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Text(label, style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 
 @Composable
-private fun ThemeModeSelector(
-    currentMode: ThemeMode,
-    onModeChange: (ThemeMode) -> Unit,
-) {
+private fun ThemeModeSelector(currentMode: ThemeMode, onModeChange: (ThemeMode) -> Unit) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Outlined.DarkMode,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                )
+                Icon(Icons.Outlined.DarkMode, contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "Mode Tampilan",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
+                Text("Mode Tampilan", style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold)
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ThemeChip(
-                    label = "Light",
-                    icon = Icons.Outlined.LightMode,
-                    selected = currentMode == ThemeMode.Light,
-                    onClick = { onModeChange(ThemeMode.Light) },
-                )
-                ThemeChip(
-                    label = "Dark",
-                    icon = Icons.Outlined.DarkMode,
-                    selected = currentMode == ThemeMode.Dark,
-                    onClick = { onModeChange(ThemeMode.Dark) },
-                )
-                ThemeChip(
-                    label = "System",
-                    icon = Icons.Outlined.SettingsBrightness,
-                    selected = currentMode == ThemeMode.System,
-                    onClick = { onModeChange(ThemeMode.System) },
-                )
+                ThemeChip("Light", Icons.Outlined.LightMode, currentMode == ThemeMode.Light) { onModeChange(ThemeMode.Light) }
+                ThemeChip("Dark", Icons.Outlined.DarkMode, currentMode == ThemeMode.Dark) { onModeChange(ThemeMode.Dark) }
+                ThemeChip("System", Icons.Outlined.SettingsBrightness, currentMode == ThemeMode.System) { onModeChange(ThemeMode.System) }
             }
         }
     }
 }
 
 @Composable
-private fun ThemeChip(
-    label: String,
-    icon: ImageVector,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
+private fun ThemeChip(label: String, icon: ImageVector, selected: Boolean, onClick: () -> Unit) {
     FilterChip(
         selected = selected,
         onClick = onClick,
-        label = { Text(text = label) },
-        leadingIcon = {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-            )
-        },
+        label = { Text(label) },
+        leadingIcon = { Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp)) },
     )
 }
 
-/**
- * @param isDestructive Tint icon & label dengan error color (untuk Reset action).
- */
 @Composable
 private fun SettingRow(
     icon: ImageVector,
@@ -455,63 +387,29 @@ private fun SettingRow(
     trailing: String? = null,
     isDestructive: Boolean = false,
 ) {
-    val tint = if (isDestructive) {
-        MaterialTheme.colorScheme.error
-    } else {
-        MaterialTheme.colorScheme.primary
-    }
-    val labelColor = if (isDestructive) {
-        MaterialTheme.colorScheme.error
-    } else {
-        MaterialTheme.colorScheme.onSurface
-    }
+    val tint = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+    val labelColor = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         onClick = onClick,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp),
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = tint,
-                modifier = Modifier.size(24.dp),
-            )
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = labelColor,
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Text(label, style = MaterialTheme.typography.titleMedium, color = labelColor)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (trailing != null) {
-                Text(
-                    text = trailing,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Text(trailing, style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
-                )
+                Icon(Icons.AutoMirrored.Outlined.ArrowForward, contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
             }
         }
     }
