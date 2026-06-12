@@ -181,9 +181,13 @@ fun CreateDeckScreen(
             Button(
                 onClick = {
                     viewModel.saveDeck { deckId ->
+                        // Snackbar jalan paralel (tidak blok navigasi)
                         scope.launch {
                             snackbarHostState.showSnackbar("✅ Deck berhasil dibuat!")
-                            delay(300)
+                        }
+                        // Navigasi setelah jeda singkat biar popup sempat kelihatan
+                        scope.launch {
+                            delay(600)
                             when (selectedMethod) {
                                 GenerationMethod.Manual -> onSavedManual(deckId)
                                 GenerationMethod.AIGenerate -> onSavedAIGenerate(deckId)

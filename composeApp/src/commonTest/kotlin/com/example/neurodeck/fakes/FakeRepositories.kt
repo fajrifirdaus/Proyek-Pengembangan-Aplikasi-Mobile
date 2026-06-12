@@ -5,6 +5,7 @@ import com.example.neurodeck.domain.model.ChatMessage
 import com.example.neurodeck.domain.model.Deck
 import com.example.neurodeck.domain.model.MessageRole
 import com.example.neurodeck.domain.model.ReviewRating
+import com.example.neurodeck.domain.model.ReminderSettings
 import com.example.neurodeck.domain.model.ThemeMode
 import com.example.neurodeck.domain.model.UserProfile
 import com.example.neurodeck.domain.repository.AIRepository
@@ -225,6 +226,7 @@ class FakeUserPreferencesRepository : UserPreferencesRepository {
 
     val profileFlow = MutableStateFlow(UserProfile())
     val themeModeFlow = MutableStateFlow(ThemeMode.System)
+    val reminderFlow = MutableStateFlow(ReminderSettings())
 
     var throwOnGetProfile = false
     var throwOnSave = false
@@ -235,6 +237,7 @@ class FakeUserPreferencesRepository : UserPreferencesRepository {
     var savedProfile: UserProfile? = null
     var resetCalled = false
     var lastThemeSet: ThemeMode? = null
+    var lastReminderSet: ReminderSettings? = null
 
     override fun observeProfile(): Flow<UserProfile> = profileFlow
 
@@ -255,6 +258,13 @@ class FakeUserPreferencesRepository : UserPreferencesRepository {
         if (throwOnSetTheme) throw RuntimeException("setThemeMode gagal")
         lastThemeSet = mode
         themeModeFlow.value = mode
+    }
+
+    override fun observeReminderSettings(): Flow<ReminderSettings> = reminderFlow
+
+    override suspend fun setReminderSettings(settings: ReminderSettings) {
+        lastReminderSet = settings
+        reminderFlow.value = settings
     }
 
     override suspend fun resetPreferences() {
@@ -319,8 +329,8 @@ class FakeChatRepository : ChatRepository {
         if (sendResult.isSuccess) {
             val now = Clock.System.now()
             messagesFlow.value = messagesFlow.value +
-                ChatMessage(role = MessageRole.User, content = userMessage, timestamp = now) +
-                ChatMessage(role = MessageRole.Assistant, content = "balasan", timestamp = now)
+                    ChatMessage(role = MessageRole.User, content = userMessage, timestamp = now) +
+                    ChatMessage(role = MessageRole.Assistant, content = "balasan", timestamp = now)
         }
         return sendResult
     }

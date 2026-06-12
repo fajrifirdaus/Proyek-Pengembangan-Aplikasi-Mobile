@@ -2,6 +2,7 @@ package com.example.neurodeck.presentation.screens.profile
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,8 +29,10 @@ import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.SettingsBrightness
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,7 +41,12 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -66,6 +74,7 @@ import org.koin.compose.viewmodel.koinViewModel
  * @param onEditProfile  Navigate ke EditProfileScreen.
  * @param onAbout        Navigate ke AboutScreen.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     onEditProfile: () -> Unit,
@@ -75,6 +84,7 @@ fun ProfileScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showResetConfirm by remember { mutableStateOf(false) }
     var showFinalResetConfirm by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Observe snackbarMessage dari ViewModel (ganti tema, reset, error)
@@ -128,12 +138,16 @@ fun ProfileScreen(
                 )
             }
             item {
-                SettingRow(
-                    icon = Icons.Outlined.Notifications,
-                    label = "Notifikasi",
-                    subtitle = "Reminder belajar harian",
-                    trailing = "Coming Soon",
-                    onClick = { },
+                ReminderRow(
+                    settings = uiState.reminderSettings,
+                    onToggle = { enabled ->
+                        viewModel.setReminder(
+                            enabled = enabled,
+                            hour = uiState.reminderSettings.hour,
+                            minute = uiState.reminderSettings.minute,
+                        )
+                    },
+                    onClickTime = { showTimePicker = true },
                 )
             }
             item {
@@ -216,9 +230,130 @@ fun ProfileScreen(
             onDismiss = { showFinalResetConfirm = false },
         )
     }
+
+    // TIME PICKER DIALOG — atur jam reminder
+    if (showTimePicker) {
+        ReminderTimePickerDialog(
+            initialHour = uiState.reminderSettings.hour,
+            initialMinute = uiState.reminderSettings.minute,
+            onDismiss = { showTimePicker = false },
+            onConfirm = { hour, minute ->
+                showTimePicker = false
+                viewModel.setReminder(
+                    enabled = true, // memilih jam = otomatis mengaktifkan
+                    hour = hour,
+                    minute = minute,
+                )
+            },
+        )
+    }
 }
 
 // ── Private components ────────────────────────────────────────────────────────
+
+/**
+ * Baris pengaturan reminder belajar harian: ikon + label + jam + switch.
+ * Tap area jam → buka time picker. Switch → aktif/nonaktif.
+ */
+@Composable
+private fun ReminderRow(
+    settings: com.example.neurodeck.domain.model.ReminderSettings,
+    onToggle: (Boolean) -> Unit,
+    onClickTime: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(12.dp),
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Notifications,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp),
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(enabled = settings.enabled, onClick = onClickTime),
+            ) {
+                Text(
+                    text = "Pengingat Belajar Harian",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = if (settings.enabled) {
+                        "Setiap hari jam ${settings.formatted} · ketuk untuk ubah"
+                    } else {
+                        "Nonaktif"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(
+                checked = settings.enabled,
+                onCheckedChange = onToggle,
+            )
+        }
+    }
+}
+
+/**
+ * Dialog Material 3 TimePicker untuk memilih jam reminder.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ReminderTimePickerDialog(
+    initialHour: Int,
+    initialMinute: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (hour: Int, minute: Int) -> Unit,
+) {
+    val timeState = rememberTimePickerState(
+        initialHour = initialHour,
+        initialMinute = initialMinute,
+        is24Hour = true,
+    )
+
+    BasicAlertDialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp,
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = "Pilih Jam Pengingat",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+                TimePicker(state = timeState)
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    TextButton(onClick = onDismiss) { Text("Batal") }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    TextButton(
+                        onClick = { onConfirm(timeState.hour, timeState.minute) },
+                    ) { Text("Simpan") }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 private fun ProfileHeader(

@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.example.neurodeck.domain.model.Deck
 import com.example.neurodeck.domain.model.ThemeMode
 import com.example.neurodeck.domain.model.UserProfile
+import com.example.neurodeck.domain.reminder.NoOpReminderScheduler
 import com.example.neurodeck.fakes.FakeDeckRepository
 import com.example.neurodeck.fakes.FakeReviewRecordRepository
 import com.example.neurodeck.fakes.FakeUserPreferencesRepository
@@ -38,7 +39,7 @@ class ProfileViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun newVm() = ProfileViewModel(prefsRepo, deckRepo, reviewRepo)
+    private fun newVm() = ProfileViewModel(prefsRepo, deckRepo, reviewRepo, NoOpReminderScheduler())
 
     @Test
     fun `state menggabungkan profil tema dan achievement`() = runTest {

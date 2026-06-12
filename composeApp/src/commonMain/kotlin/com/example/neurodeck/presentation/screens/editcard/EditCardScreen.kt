@@ -97,9 +97,13 @@ fun EditCardScreen(
                     onBackChange = viewModel::onBackChange,
                     onSave = {
                         viewModel.saveCard(onSuccess = {
+                            // Snackbar jalan paralel (tidak blok navigasi)
                             scope.launch {
                                 snackbarHostState.showSnackbar("✅ Kartu berhasil diperbarui!")
-                                delay(300)
+                            }
+                            // Navigasi balik setelah jeda singkat biar popup sempat kelihatan
+                            scope.launch {
+                                delay(600)
                                 onSaved()
                             }
                         })

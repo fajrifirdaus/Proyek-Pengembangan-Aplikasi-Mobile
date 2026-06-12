@@ -98,6 +98,7 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.sqldelight.android.driver)
             implementation(libs.androidx.core.splashscreen)
+            implementation(libs.androidx.work.runtime)
         }
 
         iosMain.dependencies {

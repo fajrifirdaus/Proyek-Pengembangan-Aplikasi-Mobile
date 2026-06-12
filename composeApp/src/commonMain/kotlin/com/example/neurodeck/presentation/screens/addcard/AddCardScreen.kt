@@ -130,9 +130,13 @@ fun AddCardScreen(
                 Button(
                     onClick = {
                         viewModel.saveCard(onSuccess = {
+                            // Snackbar jalan paralel (tidak blok navigasi)
                             scope.launch {
                                 snackbarHostState.showSnackbar("✅ Kartu berhasil ditambahkan!")
-                                delay(300)
+                            }
+                            // Navigasi balik setelah jeda singkat biar popup sempat kelihatan
+                            scope.launch {
+                                delay(600)
                                 onSaved()
                             }
                         })

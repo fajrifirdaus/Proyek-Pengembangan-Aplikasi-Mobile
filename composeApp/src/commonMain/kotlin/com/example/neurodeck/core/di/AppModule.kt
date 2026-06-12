@@ -130,6 +130,7 @@ val viewModelModule = module {
             userPreferencesRepository = get(),
             deckRepository = get(),
             reviewRecordRepository = get(),
+            reminderScheduler = get(),
         )
     }
     viewModel {
